@@ -22,6 +22,7 @@ These symbols are described below:
   * Us: Server Uptime (seconds)
   * Uc: **Currently not working** Client uptime
   * IP: The IP adress the server sees you as.
+
 ## License
 **Code**: LGPL v2.1+
 ## More
