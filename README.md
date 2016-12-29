@@ -20,8 +20,10 @@ These symbols are described below:
   * I: Description of the item
   * Ss: Stackstring of the item
   * Us: Server Uptime (seconds)
-  * Uc: **Currently not working** Client uptime
+  * Uc: Client uptime *Now working as of the 0.4.15 release*
   * IP: The IP adress the server sees you as.
+  * Gt: Gametime; Seconds since the map was created
+  * Dc: Day Count
 
 ## License
 **Code**: LGPL v2.1+
