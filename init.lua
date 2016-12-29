@@ -75,20 +75,24 @@ minetest.register_globalstep(function(dtime)
 	
 	for key, val in pairs(hud_data) do
 		player = minetest.get_player_by_name(key)
-		local pos = player:getpos()
-		if minetest.get_modpath("rank") then
-			rank = "\tR: "..minetest.colorize(rank_colors[ranks[player:get_player_name()]], ranks[player:get_player_name()])
+		if player then 
+			local pos = vector.round(player:getpos())
+			if minetest.get_modpath("rank") then
+				rank = "\tR: "..minetest.colorize(rank_colors[ranks[player:get_player_name()]], ranks[player:get_player_name()])
+			end
+			near, dist = nearest(player)
+			if near ~= "nil" then
+				hp = minetest.get_player_by_name(near):get_hp()
+				breath = minetest.get_player_by_name(near):get_breath()
+			end
+			player:hud_change(val, "text", "Np: "..near.."\tD: "..dist.."\nH: "..tostring(hp or "nil").."\tB: "..tostring(breath or "nil").."\nTd: "..tostring(math.floor(minetest.get_timeofday()*24000)).."\tLe: "..tostring(lua).."\tOr: "..tostring(obj).."\nT: "..tostring(math.floor(dtime*1000))..rank.."\tC:"..tostring(player:get_player_control_bits()).."\nX: "..tostring(pos.x).."\tY: "..tostring(pos.y).."\tZ: "..tostring(pos.z).."\n\nHi:         W: "..tostring(100 - math.floor((player:get_wielded_item():get_wear() / 65535) * 100)).."%".."\nI: "..(minetest.registered_items[player:get_wielded_item():get_name()] or {description = ""}).description.."\nSs: "..player:get_wielded_item():get_name().."\nUs (sec): "..tonumber(math.floor(minetest.get_server_uptime())).."\tUc: "..math.floor(minetest.get_player_information(key).connection_uptime).."\tIP: "..minetest.get_player_information(key).address .. "\nGt: " .. tostring(minetest.get_gametime()) .. "\tDc: " .. tostring(minetest.get_day_count()))
 		end
-		near, dist = nearest(player)
-		if near ~= "nil" then
-			hp = minetest.get_player_by_name(near):get_hp()
-			breath = minetest.get_player_by_name(near):get_breath()
-		end
-		player:hud_change(val, "text", minetest.colorize("#ffaf00", "Np: "..near.."\tD: "..dist.."\nH: "..tostring(hp or "nil").."\tB: "..tostring(breath or "nil").."\nTd: "..tostring(math.floor(minetest.get_timeofday()*24000)).."\tLe: "..tostring(lua).."\tOr: "..tostring(obj).."\nT: "..tostring(math.floor(dtime*1000))..rank.."\nX: "..tostring(round(pos.x)).."\tY: "..tostring(round(pos.y)).."\tZ: "..tostring(round(pos.z)).."\n\nHi:         W: "..tostring(100 - math.floor((player:get_wielded_item():get_wear() / 65535) * 100)).."%".."\nI: "..(minetest.registered_items[player:get_wielded_item():get_name()] or {description = ""}).description.."\nSs: "..player:get_wielded_item():get_name().."\nUs (sec): "..tonumber(math.floor(minetest.get_server_uptime())).."\tUc: "..math.floor(minetest.get_player_information(key).connection_uptime).."\tIP: "..minetest.get_player_information(key).address))
 	end
 	for key, val in pairs(invhud_data) do
 		player = minetest.get_player_by_name(key)
-		player:hud_change(val, "text", get_inv_image(player:get_wielded_item():get_name()) .. "^[resize:32x32")
+		if player then
+			player:hud_change(val, "text", get_inv_image(player:get_wielded_item():get_name()) .. "^[resize:32x32")
+		end
 	end
 end)
 
@@ -121,54 +125,3 @@ minetest.register_on_leaveplayer(function(player)
 	hud_data[player:get_player_name()] = nil
 	invhud_data[player:get_player_name()] = nil
 end)
-
-function round(number)
-	return tonumber(string.format("%.0f", number))
-end
-
---[[minetest.register_chatcommand("hud", {
-	params = "",
-	description = "Configure the HUD",
-	func = function(name)
-		if hud_text[name] then
-			minetest.show_formspec(name, "hud_improved:conf", "size[5,7]checkbox[0,-0.5;np;Nearest Player;"..hud_text[name].np or "true".."]tooltip[np;Np]"..
-															  "checkbox[0,0;d;Nearest Player's Distance;true]tooltip[d;D]"..
-															  "checkbox[0,0.5;h;Nearest Player's Health;true]tooltip[h;H]"..
-															  "checkbox[0,1;b;Nearest Player's Breath;true]tooltip[b;B]"..
-															  "checkbox[0,1.5;td;Time of Day (ticks);true]tooltip[td;Td]"..
-															  "checkbox[0,2;le;LuaEntity Count;true]tooltip[le;Le]"..
-															  "checkbox[0,2.5;or;ObjectRef Count;true]tooltip[or;Or]"..
-															  "checkbox[0,3;t;Server Tick Interval;true]tooltip[t;T]"..
-															  "checkbox[0,3.5;xyz;Position;true]tooltip[xyz;X\, Y\, Z]"..
-															  "checkbox[0,4;hiw;Held Item and Wear;true]tooltip[hiw;Hi\, W]"..
-															  "checkbox[0,4.5;us;Server Uptime;true]tooltip[us;Us]"..
-															  "checkbox[0,5;uc;Client Connection Time;true]tooltip[uc;Uc]"..
-															  "checkbox[0,5.5;ip;Client IP Address;true]tooltip[ip;IP]"..
-															  "button_exit[1.5,6.5;2,1;ok;Ok]")
-		else
-			minetest.show_formspec(name, "hud_improved:conf", "size[5,7]checkbox[0,-0.5;np;Nearest Player;true]tooltip[np;Np]"..
-															  "checkbox[0,0;d;Nearest Player's Distance;true]tooltip[d;D]"..
-															  "checkbox[0,0.5;h;Nearest Player's Health;true]tooltip[h;H]"..
-															  "checkbox[0,1;b;Nearest Player's Breath;true]tooltip[b;B]"..
-															  "checkbox[0,1.5;td;Time of Day (ticks);true]tooltip[td;Td]"..
-															  "checkbox[0,2;le;LuaEntity Count;true]tooltip[le;Le]"..
-															  "checkbox[0,2.5;or;ObjectRef Count;true]tooltip[or;Or]"..
-															  "checkbox[0,3;t;Server Tick Interval;true]tooltip[t;T]"..
-															  "checkbox[0,3.5;xyz;Position;true]tooltip[xyz;X\, Y\, Z]"..
-															  "checkbox[0,4;hiw;Held Item and Wear;true]tooltip[hiw;Hi\, W]"..
-															  "checkbox[0,4.5;us;Server Uptime;true]tooltip[us;Us]"..
-															  "checkbox[0,5;uc;Client Connection Time;true]tooltip[uc;Uc]"..
-															  "checkbox[0,5.5;ip;Client IP Address;true]tooltip[ip;IP]"..
-															  "button_exit[1.5,6.5;2,1;ok;Ok]")
-		end
-	end
-})
-
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	minetest.chat_send_player(player:get_player_name(), dump(fields))
-	local key, val
-	for key, val in pairs(fields) do
-		hud_text[player:get_player_name()][key] = val
-	end
-end)
---]]
